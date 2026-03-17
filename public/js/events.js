@@ -4,19 +4,20 @@
 // the incrementPageViews rule. loadContext() alone does NOT send this in Unomi 2.6.
 function trackPageView() {
   if (typeof unomiWebTracker === "undefined") return;
+  if (!isTrackingAllowed()) return;
   try {
     unomiWebTracker.collectEvent({
-      eventType: "view", scope: "ecommerce-demo",
+      eventType: "view", scope: "fooddemo",
       source: {
-        itemId:   "shop-" + document.location.pathname.replace(/\//g, "-"),
-        itemType: "page", scope: "ecommerce-demo",
+        itemId: "shop-" + document.location.pathname.replace(/\//g, "-"),
+        itemType: "page", scope: "fooddemo",
         properties: {
           pageInfo: {
-            pageID:         "shop-" + document.location.pathname.replace(/\//g, "-"),
-            pageName:       document.title,
-            pagePath:       document.location.pathname,
+            pageID: "shop-" + document.location.pathname.replace(/\//g, "-"),
+            pageName: document.title,
+            pagePath: document.location.pathname,
             destinationURL: document.location.origin + document.location.pathname,
-            language:       "en"
+            language: "en"
           }
         }
       }
@@ -27,11 +28,12 @@ function trackPageView() {
 
 function trackProductView(product) {
   if (typeof unomiWebTracker === "undefined") return;
+  if (!isTrackingAllowed()) return;
   try {
     unomiWebTracker.collectEvent({
-      eventType: "viewProduct", scope: "ecommerce-demo",
-      source:     { itemId: "shop-main", itemType: "page",    scope: "ecommerce-demo" },
-      target:     { itemId: product.id,  itemType: "product", scope: "ecommerce-demo" },
+      eventType: "viewProduct", scope: "fooddemo",
+      source: { itemId: "shop-main", itemType: "page", scope: "fooddemo" },
+      target: { itemId: product.id, itemType: "product", scope: "fooddemo" },
       properties: { productId: product.id, productName: product.name, category: product.category, price: product.price }
     });
   } catch (e) { console.error("[Unomi] viewProduct failed:", e); }
@@ -39,11 +41,12 @@ function trackProductView(product) {
 
 function trackAddToCart(product) {
   if (typeof unomiWebTracker === "undefined") return;
+  if (!isTrackingAllowed()) return;
   try {
     unomiWebTracker.collectEvent({
-      eventType: "addToCart", scope: "ecommerce-demo",
-      source:     { itemId: "shop-main", itemType: "page",    scope: "ecommerce-demo" },
-      target:     { itemId: product.id,  itemType: "product", scope: "ecommerce-demo" },
+      eventType: "addToCart", scope: "fooddemo",
+      source: { itemId: "shop-main", itemType: "page", scope: "fooddemo" },
+      target: { itemId: product.id, itemType: "product", scope: "fooddemo" },
       properties: { productId: product.id, productName: product.name, category: product.category, price: product.price }
     });
   } catch (e) { console.error("[Unomi] addToCart failed:", e); }
@@ -51,10 +54,11 @@ function trackAddToCart(product) {
 
 function trackRemoveFromCart(productId) {
   if (typeof unomiWebTracker === "undefined") return;
+  if (!isTrackingAllowed()) return;
   try {
     unomiWebTracker.collectEvent({
-      eventType: "removeFromCart", scope: "ecommerce-demo",
-      source:     { itemId: "shop-main", itemType: "page", scope: "ecommerce-demo" },
+      eventType: "removeFromCart", scope: "fooddemo",
+      source: { itemId: "shop-main", itemType: "page", scope: "fooddemo" },
       properties: { productId: productId }
     });
   } catch (e) { console.error("[Unomi] removeFromCart failed:", e); }
@@ -62,10 +66,11 @@ function trackRemoveFromCart(productId) {
 
 function trackPurchase(orderId, total, itemCount) {
   if (typeof unomiWebTracker === "undefined") return;
+  if (!isOrderTrackingAllowed()) return;
   try {
     unomiWebTracker.collectEvent({
-      eventType: "purchaseComplete", scope: "ecommerce-demo",
-      source:     { itemId: "shop-checkout", itemType: "page", scope: "ecommerce-demo" },
+      eventType: "purchaseComplete", scope: "fooddemo",
+      source: { itemId: "shop-checkout", itemType: "page", scope: "fooddemo" },
       properties: { orderId: orderId, totalAmount: total, itemCount: itemCount }
     });
   } catch (e) { console.error("[Unomi] purchaseComplete failed:", e); }
