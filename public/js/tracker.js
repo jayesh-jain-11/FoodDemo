@@ -88,48 +88,66 @@ function initTracker() {
         console.error("[Unomi] Callback error:", e);
       }
     }, "foodDemoCallback");
-
-    unomiWebTracker.loadContext({
-      requireSegments: true,
-      requireScoring: true,
-      requiredProfileProperties: ["*"]
-    });
     console.log("[Unomi] loadContext() called");
 
+    // Explicitly fire loadContext after callback is registered
+    setTimeout(function () {
+      try {
+        var ctx = unomiWebTracker.getLoadedContext();
+        if (!ctx || !ctx.profileId) {
+          unomiWebTracker.loadContext({
+            requireSegments: true,
+            requireScoring: true,
+            requiredProfileProperties: ["*"]
+          });
+          console.log("[Unomi] loadContext() called explicitly");
+        } else {
+          console.log("[Unomi] Context already loaded by initTracker, skipping explicit call");
+        }
+      } catch (e) {
+        console.warn("[Unomi] loadContext check failed:", e);
+      }
+    }, 100);
   } catch (e) {
-    console.error("[Unomi] Tracker init failed:", e);
+    if (e && e.message && e.message.indexOf("already requested") !== -1) {
+      console.log("[Unomi] loadContext already in flight from initTracker — callback will fire");
+    } else {
+      console.error("[Unomi] Tracker init failed:", e);
+    }
   }
 }
 
 function refreshContext(delayMs) {
   if (typeof unomiWebTracker === "undefined") return;
+  function getRawCookie(name) {
+    var entry = document.cookie.split(";").map(function (c) { return c.trim(); })
+      .find(function (c) { return c.startsWith(name + "="); });
+    return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
+  }
   setTimeout(function () {
-    try {
-      unomiWebTracker.loadContext({
-        requireSegments: true,
-        requireScoring: true,
-        requiredProfileProperties: ["*"]
-      });
-      setTimeout(function () {
-        try {
-          var ctx = unomiWebTracker.getLoadedContext();
-          if (ctx) {
-            window.unomiContext = ctx;
-            applyPersonalization(ctx);
-            updateDebugPanel(ctx);
-            var profileId = ctx.profileId;
-            if (profileId) {
-              fetch("/api/profile/" + profileId)
-                .then(function (r) { return r.json(); })
-                .then(function (profile) {
-                  var score = (profile.scores && profile.scores["engagementScore"]) || 0;
-                  document.getElementById("engagement-badge").textContent = "Score: " + score;
-                })
-                .catch(function (e) { console.warn("[Score fetch]", e); });
-            }
-          }
-        } catch (e) { console.warn("[Unomi] Manual refresh update failed:", e); }
-      }, 600);
-    } catch (e) { console.warn("[Unomi] Context refresh failed:", e); }
+    var profileId = getRawCookie("context-profile-id");
+    if (!profileId) return;
+    fetch("/api/profile/" + profileId)
+      .then(function (r) { return r.json(); })
+      .then(function (profile) {
+        var ctx = {
+          profileId: profile.itemId,
+          profileProperties: profile.properties || {},
+          profileSegments: profile.segments || [],
+          scores: profile.scores || {}
+        };
+        window.unomiContext = ctx;
+        applyPersonalization(ctx);
+        updateDebugPanel(ctx);
+        var score = (profile.scores && profile.scores["engagementScore"]) || 0;
+        document.getElementById("engagement-badge").textContent = "Score: " + score;
+        if (profile.properties) {
+          document.getElementById("debug-pageviews").textContent = profile.properties.pageViewCount || "0";
+          document.getElementById("debug-cartadds").textContent = profile.properties.totalCartAdds || "0";
+          document.getElementById("debug-segments").textContent = (profile.segments || []).join(", ") || "none";
+          document.getElementById("debug-profileid").textContent = profileId.length > 18 ? profileId.substring(0, 18) + "…" : profileId;
+        }
+      })
+      .catch(function (e) { console.warn("[Unomi] Refresh failed:", e); });
   }, delayMs || 900);
 }
