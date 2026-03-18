@@ -88,7 +88,7 @@ function showConsentBanner() {
     // Only show if user has not yet made a choice
     var p = getConsentStatus(CONSENT_PERSONALIZATION);
     var o = getConsentStatus(CONSENT_ORDER_HISTORY);
-    if (p !== "PENDING" && o !== "PENDING") return;
+    if (p !== "PENDING" || o !== "PENDING") return;
     var banner = document.getElementById("consent-banner");
     if (banner) banner.classList.remove("hidden");
 }
