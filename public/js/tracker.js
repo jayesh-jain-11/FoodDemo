@@ -64,7 +64,7 @@ function initTracker() {
         if (!_initialLoadDone) {
           _initialLoadDone = true;
           trackPageView();
-          refreshContext(1500);
+          refreshContext(600);
         }
 
         // Scores are not returned in context.json in Unomi 2.6 -- fetch via profile API
